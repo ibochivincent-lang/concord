@@ -13,6 +13,7 @@
     "asset",
     "period",
     "holdings",
+    "registers",
     "reconciliations",
     "corporateActions",
     "controls",
@@ -27,6 +28,7 @@
     "asset": { "$ref": "#/definitions/asset" },
     "period": { "$ref": "#/definitions/period" },
     "holdings": { "$ref": "#/definitions/holdings" },
+    "registers": { "type": "array", "items": { "$ref": "#/definitions/register" } },
     "reconciliations": { "type": "array", "items": { "$ref": "#/definitions/reconciliation" } },
     "corporateActions": { "type": "array", "items": { "$ref": "#/definitions/corporateAction" } },
     "controls": { "$ref": "#/definitions/controls" },
@@ -34,6 +36,32 @@
     "events": { "type": "array", "items": { "$ref": "#/definitions/event" } }
   },
   "definitions": {
+    "register": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "asOf", "source", "sha256", "positions", "issues", "importedBy", "importedAt"],
+      "properties": {
+        "id": { "type": "integer" },
+        "asOf": { "$ref": "#/definitions/dateTime" },
+        "source": { "type": "string" },
+        "sha256": { "$ref": "#/definitions/sha256" },
+        "positions": { "type": "integer" },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["line", "message"],
+            "properties": {
+              "line": { "type": "integer" },
+              "message": { "type": "string" }
+            }
+          }
+        },
+        "importedBy": { "$ref": "#/definitions/nullableString" },
+        "importedAt": { "$ref": "#/definitions/dateTime" }
+      }
+    },
     "signoff": {
       "type": "object",
       "additionalProperties": false,
@@ -103,7 +131,9 @@
         "historyFrom",
         "indexedToLedger",
         "indexedTo",
-        "ignoredAddresses"
+        "ignoredAddresses",
+        "instructionWindowHours",
+        "movementWindowHours"
       ],
       "properties": {
         "id": { "type": "string" },
@@ -117,7 +147,9 @@
         "historyFrom": { "$ref": "#/definitions/nullableDateTime" },
         "indexedToLedger": { "type": ["integer", "null"] },
         "indexedTo": { "$ref": "#/definitions/nullableDateTime" },
-        "ignoredAddresses": { "type": "array", "items": { "type": "string" } }
+        "ignoredAddresses": { "type": "array", "items": { "type": "string" } },
+        "instructionWindowHours": { "type": "integer", "minimum": 1, "maximum": 720 },
+        "movementWindowHours": { "type": "integer", "minimum": 1, "maximum": 720 }
       }
     },
     "period": {
@@ -185,7 +217,8 @@
         "note",
         "noteAuthor",
         "noteAt",
-        "noteStale"
+        "noteStale",
+        "history"
       ],
       "properties": {
         "scope": { "type": "string" },
@@ -210,7 +243,21 @@
         "note": { "$ref": "#/definitions/nullableString" },
         "noteAuthor": { "$ref": "#/definitions/nullableString" },
         "noteAt": { "$ref": "#/definitions/nullableDateTime" },
-        "noteStale": { "type": "boolean" }
+        "noteStale": { "type": "boolean" },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["status", "note", "author", "at"],
+            "properties": {
+              "status": { "enum": ["open", "acknowledged", "resolved"] },
+              "note": { "type": "string" },
+              "author": { "$ref": "#/definitions/nullableString" },
+              "at": { "$ref": "#/definitions/dateTime" }
+            }
+          }
+        }
       }
     },
     "reconciliation": {
@@ -329,7 +376,8 @@
           }
         },
         "breaks": { "type": "array", "items": { "$ref": "#/definitions/break" } },
-        "openBreaks": { "type": "integer" }
+        "openBreaks": { "type": "integer" },
+        "tolerance": { "type": ["string", "null"] }
       }
     },
     "corporateAction": {
@@ -420,6 +468,9 @@
                   "address": { "type": "string" },
                   "basis": { "$ref": "#/definitions/decimal" },
                   "expected": { "$ref": "#/definitions/decimal" },
+                  "gross": { "$ref": "#/definitions/decimal" },
+                  "withheld": { "$ref": "#/definitions/decimal" },
+                  "net": { "$ref": "#/definitions/decimal" },
                   "observed": { "$ref": "#/definitions/decimal" },
                   "difference": { "$ref": "#/definitions/decimal" },
                   "txHashes": { "type": "array", "items": { "type": "string" } },
